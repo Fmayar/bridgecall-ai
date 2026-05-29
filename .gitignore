@@ -1,0 +1,19 @@
+# Secrets
+.env
+backend/.env
+
+# Flutter
+mobile_app/bridgecall_ai/build/
+mobile_app/bridgecall_ai/.dart_tool/
+mobile_app/bridgecall_ai/.flutter-plugins
+mobile_app/bridgecall_ai/.flutter-plugins-dependencies
+
+# Node
+backend/node_modules/
+
+# macOS
+.DS_Store
+*.mp3
+mobile_app/bridgecall_ai/node_modules/
+mobile_app/bridgecall_ai/package-lock.json
+mobile_app/bridgecall_ai/package.json
