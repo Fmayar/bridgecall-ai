@@ -1,10 +1,18 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-void main() {
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const BridgeCallAI());
 }
 
@@ -17,7 +25,246 @@ class BridgeCallAI extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "BridgeCall AI",
       theme: ThemeData.dark(),
-      home: const HomePage(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF050505),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasData) {
+          return const HomePage();
+        }
+
+        return const LoginPage();
+      },
+    );
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  bool loading = false;
+  String errorMessage = "";
+
+  Future<void> login() async {
+    setState(() {
+      loading = true;
+      errorMessage = "";
+    });
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message ?? "Login failed.";
+      });
+    }
+
+    setState(() {
+      loading = false;
+    });
+  }
+
+  Future<void> resetPassword() async {
+    if (emailController.text.trim().isEmpty) {
+      setState(() {
+        errorMessage = "Enter your email first.";
+      });
+      return;
+    }
+
+    await FirebaseAuth.instance.sendPasswordResetEmail(
+      email: emailController.text.trim(),
+    );
+
+    setState(() {
+      errorMessage = "Password reset email sent.";
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Icon(Icons.translate, size: 80),
+              const SizedBox(height: 20),
+              const Text(
+                "BridgeCall AI",
+                style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Login to continue",
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 35),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: "Password",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 15),
+              if (errorMessage.isNotEmpty)
+                Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: loading ? null : login,
+                  child: loading
+                      ? const CircularProgressIndicator()
+                      : const Text("Login"),
+                ),
+              ),
+              TextButton(
+                onPressed: resetPassword,
+                child: const Text("Forgot Password?"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignUpPage()),
+                  );
+                },
+                child: const Text("Create New Account"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  bool loading = false;
+  String errorMessage = "";
+
+  Future<void> signUp() async {
+    setState(() {
+      loading = true;
+      errorMessage = "";
+    });
+
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message ?? "Sign up failed.";
+      });
+    }
+
+    setState(() {
+      loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      appBar: AppBar(
+        title: const Text("Create Account"),
+        backgroundColor: const Color(0xFF050505),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: "Password",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 15),
+            if (errorMessage.isNotEmpty)
+              Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: loading ? null : signUp,
+                child: loading
+                    ? const CircularProgressIndicator()
+                    : const Text("Sign Up"),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -75,20 +322,34 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userEmail = FirebaseAuth.instance.currentUser?.email ?? "User";
+
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       appBar: AppBar(
         title: const Text("BridgeCall AI"),
         centerTitle: true,
         backgroundColor: const Color(0xFF050505),
+        actions: [
+          IconButton(
+            onPressed: logout,
+            icon: const Icon(Icons.logout),
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text("Logged in as $userEmail", style: const TextStyle(color: Colors.white60)),
+            const SizedBox(height: 20),
             const Icon(Icons.record_voice_over, size: 80),
             const SizedBox(height: 25),
             const Text(
