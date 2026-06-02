@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -201,10 +202,25 @@ class _SignUpPageState extends State<SignUpPage> {
     });
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+     final userCredential =
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+  email: emailController.text.trim(),
+  password: passwordController.text.trim(),
+);
+
+final user = userCredential.user;
+
+if (user != null) {
+  await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
+    "uid": user.uid,
+    "email": user.email,
+    "name": "",
+    "accountType": "free",
+    "preferredFromLanguage": "English",
+    "preferredToLanguage": "Pashto",
+    "createdAt": FieldValue.serverTimestamp(),
+  });
+}
 
       if (mounted) {
         Navigator.pop(context);
