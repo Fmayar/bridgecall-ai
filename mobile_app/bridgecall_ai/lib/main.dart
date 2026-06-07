@@ -9,7 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -112,13 +112,17 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: const Color(0xFF050509),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Icon(Icons.translate, size: 80),
+              const Icon(
+                Icons.translate,
+                size: 80,
+                color: Colors.deepPurpleAccent,
+              ),
               const SizedBox(height: 20),
               const Text(
                 "BridgeCall AI",
@@ -148,7 +152,10 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 15),
               if (errorMessage.isNotEmpty)
-                Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+                Text(
+                  errorMessage,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -202,25 +209,25 @@ class _SignUpPageState extends State<SignUpPage> {
     });
 
     try {
-     final userCredential =
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
-  email: emailController.text.trim(),
-  password: passwordController.text.trim(),
-);
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-final user = userCredential.user;
+      final user = userCredential.user;
 
-if (user != null) {
-  await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
-    "uid": user.uid,
-    "email": user.email,
-    "name": "",
-    "accountType": "free",
-    "preferredFromLanguage": "English",
-    "preferredToLanguage": "Pashto",
-    "createdAt": FieldValue.serverTimestamp(),
-  });
-}
+      if (user != null) {
+        await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
+          "uid": user.uid,
+          "email": user.email,
+          "name": "",
+          "accountType": "free",
+          "preferredFromLanguage": "English",
+          "preferredToLanguage": "Pashto",
+          "createdAt": FieldValue.serverTimestamp(),
+        });
+      }
 
       if (mounted) {
         Navigator.pop(context);
@@ -239,10 +246,10 @@ if (user != null) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: const Color(0xFF050509),
       appBar: AppBar(
         title: const Text("Create Account"),
-        backgroundColor: const Color(0xFF050505),
+        backgroundColor: const Color(0xFF050509),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -266,7 +273,10 @@ if (user != null) {
             ),
             const SizedBox(height: 15),
             if (errorMessage.isNotEmpty)
-              Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+              Text(
+                errorMessage,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -305,28 +315,33 @@ class _HomePageState extends State<HomePage> {
     "French",
   ];
 
-  Widget languageDropdown({
-    required String label,
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
+  Widget languageSelector({
+    required String title,
     required String value,
     required Function(String?) onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF151515),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white24),
+        color: const Color(0xFF17171C),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
       ),
       child: Row(
         children: [
-          Text("$label:", style: const TextStyle(color: Colors.white70)),
+          Text(title, style: const TextStyle(color: Colors.white60)),
           const SizedBox(width: 18),
           Expanded(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              dropdownColor: const Color(0xFF151515),
+              dropdownColor: const Color(0xFF17171C),
               underline: const SizedBox(),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               items: languages.map((language) {
                 return DropdownMenuItem(value: language, child: Text(language));
               }).toList(),
@@ -338,71 +353,131 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
-  }
-
   @override
   Widget build(BuildContext context) {
     final userEmail = FirebaseAuth.instance.currentUser?.email ?? "User";
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: const Color(0xFF050509),
       appBar: AppBar(
-        title: const Text("BridgeCall AI"),
+        backgroundColor: const Color(0xFF050509),
+        elevation: 0,
         centerTitle: true,
-        backgroundColor: const Color(0xFF050505),
+        title: const Text(
+          "BridgeCall AI",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(
-            onPressed: logout,
-            icon: const Icon(Icons.logout),
-          )
+          IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(22),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Logged in as $userEmail", style: const TextStyle(color: Colors.white60)),
             const SizedBox(height: 20),
-            const Icon(Icons.record_voice_over, size: 80),
-            const SizedBox(height: 25),
-            const Text(
-              "AI Live Translation",
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(26),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6D5DF6), Color(0xFF9B5CFF)],
+                ),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.record_voice_over, size: 70),
+                  const SizedBox(height: 18),
+                  const Text(
+                    "AI Live Interpreter",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Translate speech instantly between languages using AI.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "Logged in: $userEmail",
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-            const Text(
-              "Speak naturally. BridgeCall AI translates your voice into another language.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.white70),
-            ),
-            const SizedBox(height: 40),
-            languageDropdown(
-              label: "From",
+            const SizedBox(height: 28),
+            languageSelector(
+              title: "From",
               value: fromLanguage,
-              onChanged: (value) {
-                setState(() => fromLanguage = value!);
-              },
+              onChanged: (value) => setState(() => fromLanguage = value!),
             ),
-            const SizedBox(height: 18),
-            languageDropdown(
-              label: "To",
+            const SizedBox(height: 16),
+            languageSelector(
+              title: "To",
               value: toLanguage,
-              onChanged: (value) {
-                setState(() => toLanguage = value!);
-              },
+              onChanged: (value) => setState(() => toLanguage = value!),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        final temp = fromLanguage;
+                        fromLanguage = toLanguage;
+                        toLanguage = temp;
+                      });
+                    },
+                    icon: const Icon(Icons.swap_horiz),
+                    label: const Text("Swap"),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TranslationHistoryPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.history),
+                    label: const Text("History"),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
-              height: 55,
+              height: 58,
               child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurpleAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
                 icon: const Icon(Icons.mic),
                 label: const Text(
-                  "Start Conversation",
-                  style: TextStyle(fontSize: 18),
+                  "Start Live Conversation",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -417,6 +492,12 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+            const SizedBox(height: 22),
+            const Text(
+              "BridgeCall AI helps users communicate across languages in real time.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54),
+            ),
           ],
         ),
       ),
@@ -428,10 +509,7 @@ class MessageItem {
   final String original;
   final String translated;
 
-  MessageItem({
-    required this.original,
-    required this.translated,
-  });
+  MessageItem({required this.original, required this.translated});
 }
 
 class ConversationPage extends StatefulWidget {
@@ -488,6 +566,26 @@ class _ConversationPageState extends State<ConversationPage> {
     }
   }
 
+  Future<void> saveTranslationHistory({
+    required String original,
+    required String translated,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("translations")
+        .add({
+      "original": original,
+      "translated": translated,
+      "fromLanguage": widget.fromLanguage,
+      "toLanguage": widget.toLanguage,
+      "createdAt": FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> speakTranslation() async {
     await flutterTts.setSpeechRate(0.45);
 
@@ -537,13 +635,13 @@ class _ConversationPageState extends State<ConversationPage> {
             if (mounted) {
               setState(() {
                 translatedText = translation;
-                history.add(
-                  MessageItem(
-                    original: words,
-                    translated: translation,
-                  ),
-                );
+                history.add(MessageItem(original: words, translated: translation));
               });
+
+              await saveTranslationHistory(
+                original: words,
+                translated: translation,
+              );
 
               await speakTranslation();
             }
@@ -579,10 +677,7 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
-  Widget translationBox({
-    required String title,
-    required String text,
-  }) {
+  Widget translationBox({required String title, required String text}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -690,6 +785,136 @@ class _ConversationPageState extends State<ConversationPage> {
             const SizedBox(height: 10),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class TranslationHistoryPage extends StatelessWidget {
+  const TranslationHistoryPage({super.key});
+
+  Future<void> deleteTranslation(String docId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("translations")
+        .doc(docId)
+        .delete();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF050505),
+        body: Center(child: Text("Please log in to view history.")),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      appBar: AppBar(
+        title: const Text("Translation History"),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF050505),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection("users")
+            .doc(user.uid)
+            .collection("translations")
+            .orderBy("createdAt", descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                "No translation history yet.",
+                style: TextStyle(color: Colors.white54),
+              ),
+            );
+          }
+
+          final translations = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(18),
+            itemCount: translations.length,
+            itemBuilder: (context, index) {
+              final doc = translations[index];
+              final data = doc.data() as Map<String, dynamic>;
+
+              final original = data["original"] ?? "";
+              final translated = data["translated"] ?? "";
+              final fromLanguage = data["fromLanguage"] ?? "";
+              final toLanguage = data["toLanguage"] ?? "";
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF151515),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.translate,
+                          color: Colors.deepPurpleAccent,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "$fromLanguage → $toLanguage",
+                            style: const TextStyle(
+                              color: Colors.deepPurpleAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => deleteTranslation(doc.id),
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Original",
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(original),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Translation",
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      translated,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
